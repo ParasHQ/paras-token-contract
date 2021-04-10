@@ -1,3 +1,44 @@
+Paras token contract
+===================
+
+Duplicate of fungible token contract (NEP-141) from https://github.com/near-examples/FT.
+
+# Contract functions
+
+## View methods
+
+### View total supply of FT
+```
+near view contract_id ft_total_supply
+```
+
+### View balance of 
+```
+near view contract_id ft_balance_of '{"account_id":"alice.testnet"}'
+```
+
+### View metadata
+```
+near view contract_id ft_metadata
+```
+
+## Call methods
+
+### Transfer FT to registered account 
+```
+near call contract_id --networkId testnet --accountId alice.testnet ft_transfer '{"receiver_id":"bob.testnet","amount":"1"}' --amount 0.000000000000000000000001
+```
+
+### Transfer FT to registered account and trigger call
+```
+near call contract_id --networkId testnet --accountId alice.testnet ft_transfer_call '{"receiver_id":"bob.testnet","amount":"1","msg":""}' --amount 0.000000000000000000000001
+```
+
+### Register account
+```
+near call contract_id --accountId bob.testnet --networkId testnet storage_deposit '{"account_id":"bob.testnet"}' --amount 0.0125
+```
+
 Fungible Token (FT)
 ===================
 
