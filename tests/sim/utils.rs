@@ -32,17 +32,16 @@ pub fn register_user(user: &near_sdk_sim::UserAccount) {
     .assert_success();
 }
 
-pub fn init_no_macros(initial_balance: u128) -> (UserAccount, UserAccount, UserAccount) {
+pub fn init_no_macros() -> (UserAccount, UserAccount, UserAccount) {
     let root = init_simulator(None);
 
     let ft = root.deploy(&FT_WASM_BYTES, FT_ID.into(), STORAGE_AMOUNT);
 
     ft.call(
         FT_ID.into(),
-        "new_default_meta",
+        "new_paras_meta",
         &json!({
             "owner_id": root.valid_account_id(),
-            "total_supply": U128::from(initial_balance),
         })
         .to_string()
         .into_bytes(),
@@ -57,9 +56,7 @@ pub fn init_no_macros(initial_balance: u128) -> (UserAccount, UserAccount, UserA
     (root, ft, alice)
 }
 
-pub fn init_with_macros(
-    initial_balance: u128,
-) -> (UserAccount, ContractAccount<FtContract>, ContractAccount<DeFiContract>, UserAccount) {
+pub fn init_with_macros() -> (UserAccount, ContractAccount<FtContract>, ContractAccount<DeFiContract>, UserAccount) {
     let root = init_simulator(None);
     // uses default values for deposit and gas
     let ft = deploy!(
@@ -72,9 +69,8 @@ pub fn init_with_macros(
         // User deploying the contract,
         signer_account: root,
         // init method
-        init_method: new_default_meta(
-            root.valid_account_id(),
-            initial_balance.into()
+        init_method: new_paras_meta(
+            root.valid_account_id()
         )
     );
     let alice = root.create_user("alice".to_string(), to_yocto("100"));

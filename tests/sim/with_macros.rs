@@ -4,21 +4,21 @@ use near_sdk_sim::{call, to_yocto, transaction::ExecutionStatus, view, DEFAULT_G
 
 use crate::utils::{init_with_macros as init, register_user};
 
+const INITIAL_BALANCE: u128 = 100_000_000_000_000_000_000_000_000;
+
 #[test]
 fn simulate_total_supply() {
-    let initial_balance = to_yocto("100");
-    let (_, ft, _, _) = init(initial_balance);
+    let (_, ft, _, _) = init();
 
     let total_supply: U128 = view!(ft.ft_total_supply()).unwrap_json();
 
-    assert_eq!(initial_balance, total_supply.0);
+    assert_eq!(INITIAL_BALANCE, total_supply.0);
 }
 
 #[test]
 fn simulate_simple_transfer() {
     let transfer_amount = to_yocto("100");
-    let initial_balance = to_yocto("100000");
-    let (root, ft, _, alice) = init(initial_balance);
+    let (root, ft, _, alice) = init();
 
     // Transfer from root to alice.
     // Uses default gas amount, `near_sdk_sim::DEFAULT_GAS`
@@ -31,14 +31,13 @@ fn simulate_simple_transfer() {
 
     let root_balance: U128 = view!(ft.ft_balance_of(root.valid_account_id())).unwrap_json();
     let alice_balance: U128 = view!(ft.ft_balance_of(alice.valid_account_id())).unwrap_json();
-    assert_eq!(initial_balance - transfer_amount, root_balance.0);
+    assert_eq!(INITIAL_BALANCE - transfer_amount, root_balance.0);
     assert_eq!(transfer_amount, alice_balance.0);
 }
 
 #[test]
 fn simulate_close_account_empty_balance() {
-    let initial_balance = to_yocto("100000");
-    let (_root, ft, _, alice) = init(initial_balance);
+    let (_root, ft, _, alice) = init();
 
     let outcome = call!(alice, ft.storage_unregister(None), deposit = 1);
     outcome.assert_success();
@@ -48,8 +47,7 @@ fn simulate_close_account_empty_balance() {
 
 #[test]
 fn simulate_close_account_non_empty_balance() {
-    let initial_balance = to_yocto("100000");
-    let (root, ft, _, _alice) = init(initial_balance);
+    let (root, ft, _, _alice) = init();
 
     let outcome = call!(root, ft.storage_unregister(None), deposit = 1);
     assert!(!outcome.is_ok(), "Should panic");
@@ -64,13 +62,12 @@ fn simulate_close_account_non_empty_balance() {
 
 #[test]
 fn simulate_close_account_force_non_empty_balance() {
-    let initial_balance = to_yocto("100000");
-    let (root, ft, _, _alice) = init(initial_balance);
+    let (root, ft, _, _alice) = init();
 
     let outcome = call!(root, ft.storage_unregister(Some(true)), deposit = 1);
     assert_eq!(
         outcome.logs()[0],
-        format!("Closed @{} with {}", root.valid_account_id(), initial_balance)
+        format!("Closed @{} with {}", root.valid_account_id(), INITIAL_BALANCE)
     );
     outcome.assert_success();
     let result: bool = outcome.unwrap_json();
@@ -84,8 +81,7 @@ fn simulate_close_account_force_non_empty_balance() {
 #[test]
 fn simulate_transfer_call_with_burned_amount() {
     let transfer_amount = to_yocto("100");
-    let initial_balance = to_yocto("1000");
-    let (root, ft, defi, _alice) = init(initial_balance);
+    let (root, ft, defi, _alice) = init();
 
     // defi contract must be registered as a FT account
     register_user(&defi.user_account);
@@ -119,7 +115,7 @@ fn simulate_transfer_call_with_burned_amount() {
 
     assert_eq!(
         outcome.logs()[1],
-        format!("Closed @{} with {}", root.valid_account_id(), initial_balance - transfer_amount)
+        format!("Closed @{} with {}", root.valid_account_id(), INITIAL_BALANCE - transfer_amount)
     );
 
     let result: bool = outcome.unwrap_json();
@@ -149,8 +145,7 @@ fn simulate_transfer_call_with_burned_amount() {
 #[test]
 fn simulate_transfer_call_with_immediate_return_and_no_refund() {
     let transfer_amount = to_yocto("100");
-    let initial_balance = to_yocto("1000");
-    let (root, ft, defi, _alice) = init(initial_balance);
+    let (root, ft, defi, _alice) = init();
 
     // defi contract must be registered as a FT account
     register_user(&defi.user_account);
@@ -170,15 +165,14 @@ fn simulate_transfer_call_with_immediate_return_and_no_refund() {
 
     let root_balance: U128 = view!(ft.ft_balance_of(root.valid_account_id())).unwrap_json();
     let defi_balance: U128 = view!(ft.ft_balance_of(defi.valid_account_id())).unwrap_json();
-    assert_eq!(initial_balance - transfer_amount, root_balance.0);
+    assert_eq!(INITIAL_BALANCE - transfer_amount, root_balance.0);
     assert_eq!(transfer_amount, defi_balance.0);
 }
 
 #[test]
 fn simulate_transfer_call_when_called_contract_not_registered_with_ft() {
     let transfer_amount = to_yocto("100");
-    let initial_balance = to_yocto("1000");
-    let (root, ft, defi, _alice) = init(initial_balance);
+    let (root, ft, defi, _alice) = init();
 
     // call fails because DEFI contract is not registered as FT user
     call!(
@@ -195,7 +189,7 @@ fn simulate_transfer_call_when_called_contract_not_registered_with_ft() {
     // balances remain unchanged
     let root_balance: U128 = view!(ft.ft_balance_of(root.valid_account_id())).unwrap_json();
     let defi_balance: U128 = view!(ft.ft_balance_of(defi.valid_account_id())).unwrap_json();
-    assert_eq!(initial_balance, root_balance.0);
+    assert_eq!(INITIAL_BALANCE, root_balance.0);
     assert_eq!(0, defi_balance.0);
 }
 
@@ -203,8 +197,7 @@ fn simulate_transfer_call_when_called_contract_not_registered_with_ft() {
 fn simulate_transfer_call_with_promise_and_refund() {
     let transfer_amount = to_yocto("100");
     let refund_amount = to_yocto("50");
-    let initial_balance = to_yocto("1000");
-    let (root, ft, defi, _alice) = init(initial_balance);
+    let (root, ft, defi, _alice) = init();
 
     register_user(&defi.user_account);
 
@@ -221,15 +214,14 @@ fn simulate_transfer_call_with_promise_and_refund() {
 
     let root_balance: U128 = view!(ft.ft_balance_of(root.valid_account_id())).unwrap_json();
     let defi_balance: U128 = view!(ft.ft_balance_of(defi.valid_account_id())).unwrap_json();
-    assert_eq!(initial_balance - transfer_amount + refund_amount, root_balance.0);
+    assert_eq!(INITIAL_BALANCE - transfer_amount + refund_amount, root_balance.0);
     assert_eq!(transfer_amount - refund_amount, defi_balance.0);
 }
 
 #[test]
 fn simulate_transfer_call_promise_panics_for_a_full_refund() {
     let transfer_amount = to_yocto("100");
-    let initial_balance = to_yocto("1000");
-    let (root, ft, defi, _alice) = init(initial_balance);
+    let (root, ft, defi, _alice) = init();
 
     // defi contract must be registered as a FT account
     register_user(&defi.user_account);
@@ -259,6 +251,6 @@ fn simulate_transfer_call_promise_panics_for_a_full_refund() {
 
     let root_balance: U128 = view!(ft.ft_balance_of(root.valid_account_id())).unwrap_json();
     let defi_balance: U128 = view!(ft.ft_balance_of(defi.valid_account_id())).unwrap_json();
-    assert_eq!(initial_balance, root_balance.0);
+    assert_eq!(INITIAL_BALANCE, root_balance.0);
     assert_eq!(0, defi_balance.0);
 }

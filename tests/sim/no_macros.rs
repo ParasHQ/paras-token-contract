@@ -4,21 +4,21 @@ use near_sdk_sim::{to_yocto, DEFAULT_GAS};
 
 use crate::utils::init_no_macros as init;
 
+const INITIAL_BALANCE: u128 = 100_000_000_000_000_000_000_000_000;
+
 #[test]
 fn simulate_total_supply() {
-    let initial_balance = to_yocto("100");
-    let (_, ft, _) = init(initial_balance);
+    let (_, ft, _) = init();
 
     let total_supply: U128 = ft.view(ft.account_id(), "ft_total_supply", b"").unwrap_json();
 
-    assert_eq!(initial_balance, total_supply.0);
+    assert_eq!(INITIAL_BALANCE, total_supply.0);
 }
 
 #[test]
 fn simulate_simple_transfer() {
     let transfer_amount = to_yocto("100");
-    let initial_balance = to_yocto("100000");
-    let (root, ft, alice) = init(initial_balance);
+    let (root, ft, alice) = init();
 
     // Transfer from root to alice.
     root.call(
@@ -57,6 +57,6 @@ fn simulate_simple_transfer() {
             .into_bytes(),
         )
         .unwrap_json();
-    assert_eq!(initial_balance - transfer_amount, root_balance.0);
+    assert_eq!(INITIAL_BALANCE - transfer_amount, root_balance.0);
     assert_eq!(transfer_amount, alice_balance.0);
 }
