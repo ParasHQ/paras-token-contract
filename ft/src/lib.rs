@@ -21,10 +21,8 @@ use near_contract_standards::fungible_token::metadata::{
 use near_contract_standards::fungible_token::FungibleToken;
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::collections::LazyOption;
-use near_sdk::json_types::{ValidAccountId, U128};
+use near_sdk::json_types::U128;
 use near_sdk::{env, log, near_bindgen, AccountId, Balance, PanicOnDefault, PromiseOrValue};
-
-near_sdk::setup_alloc!();
 
 #[near_bindgen]
 #[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
@@ -39,7 +37,7 @@ const TOTAL_SUPPLY: Balance = 100_000_000_000_000_000_000_000_000;
 #[near_bindgen]
 impl Contract {
     #[init]
-    pub fn new_paras_meta(owner_id: ValidAccountId) -> Self {
+    pub fn new_paras_meta(owner_id: AccountId) -> Self {
         Self::new(
             owner_id,
             U128(TOTAL_SUPPLY),
@@ -59,7 +57,7 @@ impl Contract {
     /// the given fungible token metadata.
     #[init]
     pub fn new(
-        owner_id: ValidAccountId,
+        owner_id: AccountId,
         total_supply: U128,
         metadata: FungibleTokenMetadata,
     ) -> Self {
@@ -69,8 +67,14 @@ impl Contract {
             token: FungibleToken::new(b"a".to_vec()),
             metadata: LazyOption::new(b"m".to_vec(), Some(&metadata)),
         };
-        this.token.internal_register_account(owner_id.as_ref());
-        this.token.internal_deposit(owner_id.as_ref(), total_supply.into());
+        this.token.internal_register_account(&owner_id);
+        this.token.internal_deposit(&owner_id, total_supply.into());
+        near_contract_standards::fungible_token::events::FtMint {
+            owner_id: &owner_id,
+            amount: &total_supply,
+            memo: Some("Initial tokens supply is minted"),
+        }
+            .emit();
         this
     }
 
@@ -103,7 +107,7 @@ mod tests {
 
     const TOTAL_SUPPLY: Balance = 100_000_000_000_000_000_000_000_000;
 
-    fn get_context(predecessor_account_id: ValidAccountId) -> VMContextBuilder {
+    fn get_context(predecessor_account_id: AccountId) -> VMContextBuilder {
         let mut builder = VMContextBuilder::new();
         builder
             .current_account_id(accounts(0))

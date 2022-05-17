@@ -24,13 +24,13 @@ fn simulate_simple_transfer() {
     // Uses default gas amount, `near_sdk_sim::DEFAULT_GAS`
     call!(
         root,
-        ft.ft_transfer(alice.valid_account_id(), transfer_amount.into(), None),
+        ft.ft_transfer(alice.account_id(), transfer_amount.into(), None),
         deposit = 1
     )
     .assert_success();
 
-    let root_balance: U128 = view!(ft.ft_balance_of(root.valid_account_id())).unwrap_json();
-    let alice_balance: U128 = view!(ft.ft_balance_of(alice.valid_account_id())).unwrap_json();
+    let root_balance: U128 = view!(ft.ft_balance_of(root.account_id())).unwrap_json();
+    let alice_balance: U128 = view!(ft.ft_balance_of(alice.account_id())).unwrap_json();
     assert_eq!(INITIAL_BALANCE - transfer_amount, root_balance.0);
     assert_eq!(transfer_amount, alice_balance.0);
 }
@@ -67,7 +67,7 @@ fn simulate_close_account_force_non_empty_balance() {
     let outcome = call!(root, ft.storage_unregister(Some(true)), deposit = 1);
     assert_eq!(
         outcome.logs()[0],
-        format!("Closed @{} with {}", root.valid_account_id(), INITIAL_BALANCE)
+        format!("Closed @{} with {}", root.account_id(), INITIAL_BALANCE)
     );
     outcome.assert_success();
     let result: bool = outcome.unwrap_json();
@@ -92,7 +92,7 @@ fn simulate_transfer_call_with_burned_amount() {
         .function_call(
             "ft_transfer_call".to_string(),
             json!({
-                "receiver_id": defi.valid_account_id(),
+                "receiver_id": defi.account_id(),
                 "amount": transfer_amount.to_string(),
                 "msg": "10",
             })
@@ -115,7 +115,7 @@ fn simulate_transfer_call_with_burned_amount() {
 
     assert_eq!(
         outcome.logs()[1],
-        format!("Closed @{} with {}", root.valid_account_id(), INITIAL_BALANCE - transfer_amount)
+        format!("Closed @{} with {}", root.account_id(), INITIAL_BALANCE - transfer_amount)
     );
 
     let result: bool = outcome.unwrap_json();
@@ -126,7 +126,7 @@ fn simulate_transfer_call_with_burned_amount() {
     assert_eq!(callback_outcome.logs()[0], "The account of the sender was deleted");
     assert_eq!(
         callback_outcome.logs()[1],
-        format!("Account @{} burned {}", root.valid_account_id(), 10)
+        format!("Account @{} burned {}", root.account_id(), 10)
     );
 
     let used_amount: U128 = callback_outcome.unwrap_json();
@@ -138,7 +138,7 @@ fn simulate_transfer_call_with_burned_amount() {
 
     assert_eq!(total_supply.0, transfer_amount - 10);
 
-    let defi_balance: U128 = view!(ft.ft_balance_of(defi.valid_account_id())).unwrap_json();
+    let defi_balance: U128 = view!(ft.ft_balance_of(defi.account_id())).unwrap_json();
     assert_eq!(defi_balance.0, transfer_amount - 10);
 }
 
@@ -154,7 +154,7 @@ fn simulate_transfer_call_with_immediate_return_and_no_refund() {
     call!(
         root,
         ft.ft_transfer_call(
-            defi.valid_account_id(),
+            defi.account_id(),
             transfer_amount.into(),
             None,
             "take-my-money".into()
@@ -163,8 +163,8 @@ fn simulate_transfer_call_with_immediate_return_and_no_refund() {
     )
     .assert_success();
 
-    let root_balance: U128 = view!(ft.ft_balance_of(root.valid_account_id())).unwrap_json();
-    let defi_balance: U128 = view!(ft.ft_balance_of(defi.valid_account_id())).unwrap_json();
+    let root_balance: U128 = view!(ft.ft_balance_of(root.account_id())).unwrap_json();
+    let defi_balance: U128 = view!(ft.ft_balance_of(defi.account_id())).unwrap_json();
     assert_eq!(INITIAL_BALANCE - transfer_amount, root_balance.0);
     assert_eq!(transfer_amount, defi_balance.0);
 }
@@ -178,7 +178,7 @@ fn simulate_transfer_call_when_called_contract_not_registered_with_ft() {
     call!(
         root,
         ft.ft_transfer_call(
-            defi.valid_account_id(),
+            defi.account_id(),
             transfer_amount.into(),
             None,
             "take-my-money".into()
@@ -187,8 +187,8 @@ fn simulate_transfer_call_when_called_contract_not_registered_with_ft() {
     );
 
     // balances remain unchanged
-    let root_balance: U128 = view!(ft.ft_balance_of(root.valid_account_id())).unwrap_json();
-    let defi_balance: U128 = view!(ft.ft_balance_of(defi.valid_account_id())).unwrap_json();
+    let root_balance: U128 = view!(ft.ft_balance_of(root.account_id())).unwrap_json();
+    let defi_balance: U128 = view!(ft.ft_balance_of(defi.account_id())).unwrap_json();
     assert_eq!(INITIAL_BALANCE, root_balance.0);
     assert_eq!(0, defi_balance.0);
 }
@@ -204,7 +204,7 @@ fn simulate_transfer_call_with_promise_and_refund() {
     call!(
         root,
         ft.ft_transfer_call(
-            defi.valid_account_id(),
+            defi.account_id(),
             transfer_amount.into(),
             None,
             refund_amount.to_string()
@@ -212,8 +212,8 @@ fn simulate_transfer_call_with_promise_and_refund() {
         deposit = 1
     );
 
-    let root_balance: U128 = view!(ft.ft_balance_of(root.valid_account_id())).unwrap_json();
-    let defi_balance: U128 = view!(ft.ft_balance_of(defi.valid_account_id())).unwrap_json();
+    let root_balance: U128 = view!(ft.ft_balance_of(root.account_id())).unwrap_json();
+    let defi_balance: U128 = view!(ft.ft_balance_of(defi.account_id())).unwrap_json();
     assert_eq!(INITIAL_BALANCE - transfer_amount + refund_amount, root_balance.0);
     assert_eq!(transfer_amount - refund_amount, defi_balance.0);
 }
@@ -230,7 +230,7 @@ fn simulate_transfer_call_promise_panics_for_a_full_refund() {
     let res = call!(
         root,
         ft.ft_transfer_call(
-            defi.valid_account_id(),
+            defi.account_id(),
             transfer_amount.into(),
             None,
             "no parsey as integer big panic oh no".to_string()
@@ -249,8 +249,8 @@ fn simulate_transfer_call_promise_panics_for_a_full_refund() {
         unreachable!();
     }
 
-    let root_balance: U128 = view!(ft.ft_balance_of(root.valid_account_id())).unwrap_json();
-    let defi_balance: U128 = view!(ft.ft_balance_of(defi.valid_account_id())).unwrap_json();
+    let root_balance: U128 = view!(ft.ft_balance_of(root.account_id())).unwrap_json();
+    let defi_balance: U128 = view!(ft.ft_balance_of(defi.account_id())).unwrap_json();
     assert_eq!(INITIAL_BALANCE, root_balance.0);
     assert_eq!(0, defi_balance.0);
 }
