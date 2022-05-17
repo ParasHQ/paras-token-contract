@@ -38,7 +38,7 @@ pub fn init_no_macros() -> (UserAccount, UserAccount, UserAccount) {
     let ft = root.deploy(&FT_WASM_BYTES, FT_ID.parse().unwrap(), STORAGE_AMOUNT);
 
     ft.call(
-        FT_ID.into(),
+        FT_ID.parse().unwrap(),
         "new_paras_meta",
         &json!({
             "owner_id": root.account_id(),
