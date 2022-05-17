@@ -19,10 +19,10 @@ const DEFI_ID: &str = "defi";
 // Register the given `user` with FT contract
 pub fn register_user(user: &near_sdk_sim::UserAccount) {
     user.call(
-        FT_ID.to_string(),
+        FT_ID.parse().unwrap(),
         "storage_deposit",
         &json!({
-            "account_id": user.valid_account_id()
+            "account_id": user.account_id()
         })
         .to_string()
         .into_bytes(),
@@ -35,13 +35,13 @@ pub fn register_user(user: &near_sdk_sim::UserAccount) {
 pub fn init_no_macros() -> (UserAccount, UserAccount, UserAccount) {
     let root = init_simulator(None);
 
-    let ft = root.deploy(&FT_WASM_BYTES, FT_ID.into(), STORAGE_AMOUNT);
+    let ft = root.deploy(&FT_WASM_BYTES, FT_ID.parse().unwrap(), STORAGE_AMOUNT);
 
     ft.call(
         FT_ID.into(),
         "new_paras_meta",
         &json!({
-            "owner_id": root.valid_account_id(),
+            "owner_id": root.account_id(),
         })
         .to_string()
         .into_bytes(),
@@ -50,7 +50,7 @@ pub fn init_no_macros() -> (UserAccount, UserAccount, UserAccount) {
     )
     .assert_success();
 
-    let alice = root.create_user("alice".to_string(), to_yocto("100"));
+    let alice = root.create_user("alice".parse().unwrap(), to_yocto("100"));
     register_user(&alice);
 
     (root, ft, alice)
@@ -70,10 +70,10 @@ pub fn init_with_macros() -> (UserAccount, ContractAccount<FtContract>, Contract
         signer_account: root,
         // init method
         init_method: new_paras_meta(
-            root.valid_account_id()
+            root.account_id()
         )
     );
-    let alice = root.create_user("alice".to_string(), to_yocto("100"));
+    let alice = root.create_user("alice".parse().unwrap(), to_yocto("100"));
     register_user(&alice);
 
     let defi = deploy!(
@@ -82,7 +82,7 @@ pub fn init_with_macros() -> (UserAccount, ContractAccount<FtContract>, Contract
         bytes: &DEFI_WASM_BYTES,
         signer_account: root,
         init_method: new(
-            ft.valid_account_id()
+            ft.account_id()
         )
     );
 
