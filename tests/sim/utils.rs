@@ -1,7 +1,6 @@
 use defi::DeFiContract;
 use fungible_token::ContractContract as FtContract;
 
-use near_sdk::json_types::U128;
 use near_sdk::serde_json::json;
 use near_sdk_sim::{
     deploy, init_simulator, to_yocto, ContractAccount, UserAccount, DEFAULT_GAS, STORAGE_AMOUNT,
